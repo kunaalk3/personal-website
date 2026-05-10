@@ -5,6 +5,38 @@ import { motion } from 'framer-motion'
 import { EXPERIENCE } from '@/lib/data'
 import TiltCard from './TiltCard'
 
+function useDragScroll() {
+  const ref = useRef<HTMLDivElement>(null)
+  const dragging = useRef(false)
+  const startX = useRef(0)
+  const scrollLeft = useRef(0)
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    const el = ref.current
+    if (!el) return
+    dragging.current = true
+    startX.current = e.pageX - el.offsetLeft
+    scrollLeft.current = el.scrollLeft
+    el.style.cursor = 'grabbing'
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragging.current || !el) return
+      const x = ev.pageX - el.offsetLeft
+      el.scrollLeft = scrollLeft.current - (x - startX.current) * 1.2
+    }
+    const onUp = () => {
+      dragging.current = false
+      if (el) el.style.cursor = 'grab'
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  return { ref, onMouseDown }
+}
+
 function ExperienceCard({ role, index }: { role: (typeof EXPERIENCE)[0]; index: number }) {
   return (
     <motion.div
@@ -112,7 +144,7 @@ function ExperienceCard({ role, index }: { role: (typeof EXPERIENCE)[0]; index: 
 }
 
 export default function Work() {
-  const trackRef = useRef<HTMLDivElement>(null)
+  const { ref: trackRef, onMouseDown } = useDragScroll()
   const current = EXPERIENCE.filter((e) => e.current)
   const past = EXPERIENCE.filter((e) => !e.current)
 
@@ -148,11 +180,10 @@ export default function Work() {
           </span>
         </div>
 
-        {/* Scroll track */}
-        <motion.div
+        {/* Scroll track — native overflow scroll (works on mobile touch + desktop drag) */}
+        <div
           ref={trackRef}
-          drag="x"
-          dragConstraints={trackRef}
+          onMouseDown={onMouseDown}
           className="no-scrollbar"
           style={{
             display: 'flex',
@@ -161,8 +192,8 @@ export default function Work() {
             paddingBottom: 12,
             cursor: 'grab',
             userSelect: 'none',
+            WebkitOverflowScrolling: 'touch',
           }}
-          whileTap={{ cursor: 'grabbing' }}
         >
           {current.map((role, i) => (
             <ExperienceCard key={role.company} role={role} index={i} />
@@ -178,7 +209,7 @@ export default function Work() {
           {past.map((role, i) => (
             <ExperienceCard key={role.company} role={role} index={i} />
           ))}
-        </motion.div>
+        </div>
 
       </div>
     </section>
