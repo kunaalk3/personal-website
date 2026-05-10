@@ -10,7 +10,7 @@ export default function Cursor() {
   const ringY = useSpring(cursorY, { stiffness: 120, damping: 18 })
   const [hovering, setHovering] = useState(false)
   const [clicking, setClicking] = useState(false)
-  const rafRef = useRef<number>()
+  const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
