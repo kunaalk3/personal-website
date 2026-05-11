@@ -6,6 +6,7 @@ import Projects from '@/components/Projects'
 import LifeSection from '@/components/Life/LifeSection'
 import Connect from '@/components/Connect'
 import ClientLayer from '@/components/ClientLayer'
+import RetroOverlay from '@/components/RetroLanding/RetroOverlay'
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
         <LifeSection />
         <Connect />
       </main>
+      <RetroOverlay />
     </>
   )
 }

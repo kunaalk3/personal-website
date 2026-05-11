@@ -1,6 +1,7 @@
 export const LINKS = {
   linkedin: 'https://www.linkedin.com/in/kunaal-ravindran-86b0211b7/',
   github: 'https://github.com/kunaalk3',
+  instagram: 'https://www.instagram.com/kunaal_k3/',
   chess: 'https://www.chess.com/member/kunaal_k3',
   fitchef: 'https://fitchefaus.com/',
   mcgees: 'https://www.adl.mcgees.com.au/',
