@@ -13,22 +13,22 @@ const W = COLS * TILE // 320
 const H = ROWS * TILE // 224
 
 // --- Map ---
-// T = tree-pillar (solid), W = waterfall (solid), . = floor, , = darker floor, f = star/spark
+// T = tree (solid), W = waterfall (solid), . = grass, , = grass alt, f = flower
 const MAP: string[] = [
   'TTTTTTTTTTTTTTTTTTTT',
+  'T.WW.f.............T',
+  'T.WW...,...........T',
   'T.WW...............T',
-  'T.WW.....,.........T',
-  'T.WW...............T',
-  'T.WW...............T',
-  'T.WW...............T',
-  'T.....f....,.......T',
+  'T.WW...........,...T',
+  'T.WW.f.............T',
+  'T...........,......T',
+  'T...,.....f........T',
+  'T..................T',
+  'T..f...........,...T',
   'T..................T',
   'T..........f.......T',
-  'T..,...............T',
-  'T..................T',
-  'T..................T',
-  'T..................T',
-  'TTTTTTTTTT..TTTTTTTT',
+  'T..,...,.......f...T',
+  'TTTTTTTTTTTTTTTTTTTT',
 ]
 
 const SOLID = new Set(['T', 'W'])
@@ -57,12 +57,13 @@ type Zone = {
   url?: string
 }
 
+// Portfolio sits at the world centre (cols 9-10, rows 6-7)
 const ZONES: Zone[] = [
   {
     id: 'linkedin',
     tx: 5, ty: 2, tw: 2, th: 2,
     label: 'LINKEDIN', sub: 'Open profile',
-    letter: 'in', color: '#4f9eff',
+    letter: 'in', color: '#3aa0ff',
     action: 'link', url: LINKS.linkedin,
   },
   {
@@ -74,38 +75,38 @@ const ZONES: Zone[] = [
   },
   {
     id: 'gym',
-    tx: 16, ty: 3, tw: 2, th: 2,
+    tx: 16, ty: 5, tw: 2, th: 2,
     label: 'GYM', sub: 'Bench press',
-    letter: '◣◢', color: '#e36b6b',
+    letter: '◣◢', color: '#ff5555',
     action: 'easter',
   },
   {
+    id: 'portfolio',
+    tx: 9, ty: 6, tw: 2, th: 2,
+    label: 'PORTFOLIO', sub: 'Enter the site',
+    letter: 'KR', color: '#a06bff',
+    action: 'enter',
+  },
+  {
     id: 'food',
-    tx: 4, ty: 10, tw: 2, th: 2,
+    tx: 5, ty: 10, tw: 2, th: 2,
     label: 'FOOD', sub: 'Sous chef stop',
-    letter: '◐', color: '#c4d65a',
+    letter: '◐', color: '#ffd158',
     action: 'easter',
   },
   {
     id: 'instagram',
     tx: 9, ty: 10, tw: 2, th: 2,
     label: 'INSTAGRAM', sub: 'Follow',
-    letter: 'IG', color: '#e35d8e',
+    letter: 'IG', color: '#ff4f87',
     action: 'link', url: LINKS.instagram,
   },
   {
     id: 'snake',
-    tx: 14, ty: 10, tw: 2, th: 2,
+    tx: 13, ty: 10, tw: 2, th: 2,
     label: 'ARCADE', sub: 'Play Snake',
-    letter: 'AR', color: '#ddc35a',
+    letter: 'AR', color: '#ffd13a',
     action: 'game',
-  },
-  {
-    id: 'portfolio',
-    tx: 9, ty: 12, tw: 2, th: 2,
-    label: 'PORTFOLIO', sub: 'Enter the site',
-    letter: 'KR', color: '#a06bff',
-    action: 'enter',
   },
 ]
 
@@ -121,8 +122,8 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const playerRef = useRef<Vec>({ x: W / 2 - PLAYER_W / 2, y: 7 * TILE })
-  const dirRef = useRef<Dir>('down')
+  const playerRef = useRef<Vec>({ x: W / 2 - PLAYER_W / 2, y: 12 * TILE + 2 })
+  const dirRef = useRef<Dir>('up')
   const movingRef = useRef(false)
   const keysRef = useRef<Set<string>>(new Set())
   const joyRef = useRef<Vec>({ x: 0, y: 0 })
@@ -142,12 +143,10 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
       } else if (z.action === 'enter') {
         onEnterSite()
       }
-      // 'easter' has no B-trigger action — it's automatic while standing on it
     },
     [onEnterSite]
   )
 
-  // Keyboard
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
       if (showSnake) return
@@ -171,7 +170,6 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
     }
   }, [started, showSnake, triggerZone])
 
-  // Canvas scaling
   useEffect(() => {
     const fit = () => {
       const c = canvasRef.current
@@ -200,7 +198,6 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
     }
   }, [started])
 
-  // Game loop
   useEffect(() => {
     let raf = 0
     let last = performance.now()
@@ -278,7 +275,6 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
         flexDirection: 'column',
       }}
     >
-      {/* Title bar */}
       <div
         style={{
           position: 'absolute',
@@ -308,7 +304,6 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
         </button>
       </div>
 
-      {/* Canvas stage */}
       <div
         ref={containerRef}
         style={{
@@ -329,15 +324,14 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
           height={H}
           style={{
             imageRendering: 'pixelated',
-            background: '#050505',
+            background: '#5e9a4e',
             boxShadow:
-              '0 0 0 1px rgba(255,255,255,0.12), 0 0 0 6px #0a0a0a, 0 0 0 7px rgba(255,255,255,0.06), 0 30px 80px rgba(0,0,0,0.75)',
+              '0 0 0 4px #1a1a1a, 0 0 0 8px #333, 0 30px 80px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.25)',
             borderRadius: 2,
           }}
         />
       </div>
 
-      {/* Press Start overlay */}
       {!started && (
         <div
           onClick={() => setStarted(true)}
@@ -389,7 +383,6 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
         </div>
       )}
 
-      {/* Action prompt */}
       {started && activeZone && (
         <div
           style={{
@@ -443,7 +436,6 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
         </div>
       )}
 
-      {/* Controls dock */}
       {started && (
         <div
           style={{
@@ -488,9 +480,9 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
                 borderRadius: '50%',
                 background:
                   activeZone && activeZone.action !== 'easter'
-                    ? `radial-gradient(circle at 30% 30%, #fff, ${activeZone.color} 60%, #1a1a1a 100%)`
-                    : 'radial-gradient(circle at 30% 30%, #f5f5f5, #6a6a6a 60%, #111 100%)',
-                border: '3px solid rgba(255,255,255,0.18)',
+                    ? `radial-gradient(circle at 30% 30%, #fff, ${activeZone.color} 55%, #4a1a6a 100%)`
+                    : 'radial-gradient(circle at 30% 30%, #fff, #d33 55%, #5a0d0d 100%)',
+                border: '3px solid rgba(0,0,0,0.6)',
                 color: '#fff',
                 fontWeight: 800,
                 fontSize: 24,
@@ -498,7 +490,7 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
                 cursor: 'pointer',
                 touchAction: 'none',
                 userSelect: 'none',
-                boxShadow: 'inset 0 -6px 8px rgba(0,0,0,0.45), 0 6px 14px rgba(0,0,0,0.6)',
+                boxShadow: 'inset 0 -6px 8px rgba(0,0,0,0.35), 0 6px 14px rgba(0,0,0,0.5)',
                 transition: 'transform 0.1s',
               }}
             >
@@ -569,7 +561,7 @@ function activeZoneFromPos(p: Vec): Zone | null {
   return null
 }
 
-// --- Rendering ---
+// --- Rendering (original green Pokémon-style palette) ---
 function render(
   ctx: CanvasRenderingContext2D,
   player: Vec,
@@ -578,46 +570,51 @@ function render(
   t: number,
   active: Zone | null
 ) {
-  // Background — pure black
-  ctx.fillStyle = '#050505'
+  // Grass background
+  ctx.fillStyle = '#5e9a4e'
   ctx.fillRect(0, 0, W, H)
 
-  // Dot-grid pattern (matches portfolio Hero)
-  drawDotGrid(ctx, t)
-
-  // Floor tiles & decoration (stars and dim grass dither)
+  // Grass dither
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const ch = MAP[y][x]
-      if (ch === ',') drawFloorDim(ctx, x * TILE, y * TILE)
-      else if (ch === 'f') drawSpark(ctx, x * TILE, y * TILE, t + x * 0.3 + y * 0.4)
+      if (ch === '.' || ch === ',' || ch === 'f') {
+        drawGrass(ctx, x * TILE, y * TILE, (x + y) % 2 === 0)
+      }
     }
   }
 
-  // Path tiles around portal exit (cols 10-11, rows 12-13)
-  for (let y = 12; y < 14; y++) {
-    for (let x = 10; x < 12; x++) {
-      drawPath(ctx, x * TILE, y * TILE)
+  // Flowers
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (MAP[y][x] === 'f') drawFlower(ctx, x * TILE, y * TILE, (x * 7 + y * 13) % 3)
     }
   }
 
-  // Trees (border pillars + waterfall)
+  // Pond at base of waterfall (decorative)
+  drawPond(ctx, 1 * TILE + 8, 5 * TILE + 12, t)
+
+  // Trees & waterfall (solid tiles)
   for (let y = 0; y < ROWS; y++) {
     for (let x = 0; x < COLS; x++) {
       const ch = MAP[y][x]
-      if (ch === 'T') drawPillar(ctx, x * TILE, y * TILE)
+      if (ch === 'T') drawTree(ctx, x * TILE, y * TILE)
       else if (ch === 'W') drawWaterfall(ctx, x * TILE, y * TILE, t, y)
     }
   }
 
-  // Zone props (pedestals / easter eggs)
+  // Portfolio gets a special swirl pad underneath
+  const portfolio = ZONES.find((z) => z.id === 'portfolio')!
+  drawPortalPad(ctx, portfolio, t)
+
+  // Zone props
   for (const z of ZONES) {
     if (z.id === 'food') drawFoodTile(ctx, z, t, active?.id === z.id)
     else if (z.id === 'gym') drawGymTile(ctx, z, t, active?.id === z.id)
     else drawPedestal(ctx, z, t, active?.id === z.id)
   }
 
-  // Player (with easter-egg animation states)
+  // Player (with easter-egg states)
   if (active?.id === 'food') {
     drawPlayerEating(ctx, player.x, player.y, t)
   } else if (active?.id === 'gym') {
@@ -633,7 +630,7 @@ function render(
     const cx = z.tx * TILE + (z.tw * TILE) / 2
     const cy = z.ty * TILE - 2
     const isActive = active?.id === z.id
-    ctx.fillStyle = isActive ? '#fff' : 'rgba(255,255,255,0.55)'
+    ctx.fillStyle = isActive ? '#fff' : 'rgba(255,255,255,0.78)'
     ctx.fillText(z.label, cx, cy)
   }
   ctx.textAlign = 'start'
@@ -641,105 +638,112 @@ function render(
   // Vignette
   const grad = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, H * 0.85)
   grad.addColorStop(0, 'rgba(0,0,0,0)')
-  grad.addColorStop(1, 'rgba(0,0,0,0.55)')
+  grad.addColorStop(1, 'rgba(0,0,0,0.32)')
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, W, H)
 }
 
-function drawDotGrid(ctx: CanvasRenderingContext2D, t: number) {
-  // Subtle white dots every 8px, fading
-  ctx.fillStyle = 'rgba(255,255,255,0.05)'
-  for (let y = 4; y < H; y += 8) {
-    for (let x = 4; x < W; x += 8) {
-      ctx.fillRect(x, y, 1, 1)
-    }
-  }
-  // A second slow-pulse layer
-  const a = 0.04 + 0.025 * Math.sin(t * 1.4)
-  ctx.fillStyle = `rgba(255,255,255,${a})`
-  for (let y = 8; y < H; y += 16) {
-    for (let x = 8; x < W; x += 16) {
-      ctx.fillRect(x, y, 1, 1)
-    }
-  }
-}
-
-function drawFloorDim(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // Slightly brighter floor cell — small + sign
-  ctx.fillStyle = 'rgba(255,255,255,0.08)'
-  ctx.fillRect(x + 7, y + 6, 2, 1)
-  ctx.fillRect(x + 8, y + 5, 1, 3)
-}
-
-function drawSpark(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  // Twinkling 4-point star
-  const a = 0.35 + 0.4 * Math.sin(t * 2.5)
-  ctx.fillStyle = `rgba(255,255,255,${Math.max(0, a)})`
-  ctx.fillRect(x + 8, y + 6, 1, 5)
-  ctx.fillRect(x + 6, y + 8, 5, 1)
-  ctx.fillRect(x + 7, y + 7, 3, 3)
-  ctx.fillStyle = `rgba(255,255,255,${Math.max(0, a * 1.4)})`
-  ctx.fillRect(x + 8, y + 8, 1, 1)
-}
-
-function drawPath(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // A walkway of dotted pattern, slightly brighter
-  ctx.fillStyle = 'rgba(255,255,255,0.04)'
+function drawGrass(ctx: CanvasRenderingContext2D, x: number, y: number, alt: boolean) {
+  ctx.fillStyle = alt ? '#5e9a4e' : '#5a924a'
   ctx.fillRect(x, y, TILE, TILE)
-  ctx.fillStyle = 'rgba(255,255,255,0.22)'
-  ctx.fillRect(x + 4, y + 4, 1, 1)
-  ctx.fillRect(x + 12, y + 4, 1, 1)
-  ctx.fillRect(x + 4, y + 12, 1, 1)
-  ctx.fillRect(x + 12, y + 12, 1, 1)
-  ctx.fillStyle = 'rgba(255,255,255,0.12)'
-  ctx.fillRect(x + 8, y + 8, 1, 1)
-}
-
-function drawPillar(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  // Slim dark obelisk with thin white outline + cap
-  // Background floor
-  ctx.fillStyle = '#070707'
-  ctx.fillRect(x, y, TILE, TILE)
-  // Pillar body
-  ctx.fillStyle = '#181818'
-  ctx.fillRect(x + 3, y + 1, 10, 14)
-  ctx.fillStyle = '#222'
-  ctx.fillRect(x + 4, y + 2, 8, 12)
-  // Outline
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'
-  ctx.fillRect(x + 3, y + 1, 10, 1) // top
-  ctx.fillRect(x + 3, y + 14, 10, 1) // bottom
-  ctx.fillRect(x + 3, y + 1, 1, 14) // left
-  ctx.fillRect(x + 12, y + 1, 1, 14) // right
-  // Highlight pip
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'
-  ctx.fillRect(x + 7, y + 3, 2, 1)
+  ctx.fillStyle = 'rgba(255,255,255,0.06)'
+  ctx.fillRect(x + 3, y + 5, 1, 2)
+  ctx.fillRect(x + 11, y + 9, 1, 2)
+  ctx.fillStyle = 'rgba(0,0,0,0.08)'
   ctx.fillRect(x + 7, y + 12, 2, 1)
 }
 
-function drawWaterfall(ctx: CanvasRenderingContext2D, x: number, y: number, t: number, row: number) {
-  // Dark base
-  ctx.fillStyle = '#0a0a12'
+function drawFlower(ctx: CanvasRenderingContext2D, x: number, y: number, variant: number) {
+  const cx = x + 8
+  const cy = y + 9
+  const colors = ['#ffe66d', '#ff6b6b', '#cdb4ff']
+  const c = colors[variant % colors.length]
+  ctx.fillStyle = '#2d5a2d'
+  ctx.fillRect(cx, cy + 1, 1, 3)
+  ctx.fillStyle = c
+  ctx.fillRect(cx - 1, cy - 1, 3, 3)
+  ctx.fillStyle = '#fff8c2'
+  ctx.fillRect(cx, cy, 1, 1)
+}
+
+function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  ctx.fillStyle = '#5a924a'
   ctx.fillRect(x, y, TILE, TILE)
-  // Side walls (thin)
-  ctx.fillStyle = 'rgba(255,255,255,0.25)'
+  ctx.fillStyle = '#5a3a1f'
+  ctx.fillRect(x + 7, y + 11, 2, 4)
+  ctx.fillStyle = '#2d5a2d'
+  ctx.fillRect(x + 3, y + 3, 10, 9)
+  ctx.fillStyle = '#3d7a3d'
+  ctx.fillRect(x + 4, y + 4, 8, 6)
+  ctx.fillStyle = '#56a056'
+  ctx.fillRect(x + 5, y + 4, 4, 3)
+  ctx.fillStyle = '#1a2e1a'
+  ctx.fillRect(x + 2, y + 4, 1, 7)
+  ctx.fillRect(x + 13, y + 4, 1, 7)
+  ctx.fillRect(x + 3, y + 2, 10, 1)
+  ctx.fillRect(x + 3, y + 12, 10, 1)
+  ctx.fillRect(x + 6, y + 15, 4, 1)
+}
+
+function drawWaterfall(ctx: CanvasRenderingContext2D, x: number, y: number, t: number, row: number) {
+  // Base water
+  ctx.fillStyle = '#3a6dd9'
+  ctx.fillRect(x, y, TILE, TILE)
+  // Edges (rock)
+  ctx.fillStyle = '#5a4a3a'
   ctx.fillRect(x, y, 1, TILE)
   ctx.fillRect(x + TILE - 1, y, 1, TILE)
-  // Animated falling water streaks
-  const streaks = 3
-  for (let i = 0; i < streaks; i++) {
-    const offset = (t * 36 + i * 17 + row * 7) % TILE
+  // Animated white streaks falling
+  for (let i = 0; i < 3; i++) {
+    const offset = (t * 38 + i * 17 + row * 7) % TILE
     const sy = y + offset
     const sx = x + 3 + ((i * 5) % (TILE - 6))
-    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.fillStyle = '#cfe6ff'
     ctx.fillRect(sx, sy, 1, 3)
-    ctx.fillStyle = 'rgba(255,255,255,0.22)'
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'
     ctx.fillRect(sx, sy + 3, 1, 2)
   }
-  // Mist sparkles
+  // Foam sparkle
   if (Math.floor(t * 6) % 3 === row % 3) {
-    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    ctx.fillStyle = '#ffffff'
     ctx.fillRect(x + ((row * 5) % 12) + 2, y + 2, 1, 1)
+  }
+}
+
+function drawPond(ctx: CanvasRenderingContext2D, cx: number, cy: number, t: number) {
+  // Small oval pond beneath the waterfall
+  ctx.fillStyle = '#2d56a8'
+  ctx.fillRect(cx - 12, cy, 24, 6)
+  ctx.fillRect(cx - 14, cy + 1, 28, 4)
+  ctx.fillStyle = '#3a6dd9'
+  ctx.fillRect(cx - 11, cy + 1, 22, 4)
+  // Ripples
+  const r = (t * 30) % 8
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.ellipse(cx, cy + 3, 3 + r, 1.2 + r * 0.2, 0, 0, Math.PI * 2)
+  ctx.stroke()
+}
+
+function drawPortalPad(ctx: CanvasRenderingContext2D, z: Zone, t: number) {
+  // Animated swirl beneath the portfolio pedestal
+  const cx = z.tx * TILE + (z.tw * TILE) / 2
+  const cy = z.ty * TILE + (z.th * TILE) / 2
+  const radius = 22
+  const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, radius)
+  grad.addColorStop(0, 'rgba(160,107,255,0.45)')
+  grad.addColorStop(1, 'rgba(160,107,255,0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2)
+  // Rotating dashes (4 of them)
+  for (let i = 0; i < 6; i++) {
+    const a = (t * 2.4) + i * (Math.PI / 3)
+    const r = 14
+    const dx = Math.cos(a) * r
+    const dy = Math.sin(a) * r * 0.55
+    ctx.fillStyle = 'rgba(220,200,255,0.6)'
+    ctx.fillRect(Math.round(cx + dx), Math.round(cy + dy), 2, 1)
   }
 }
 
@@ -749,37 +753,34 @@ function drawPedestal(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: 
   const w = z.tw * TILE
   const h = z.th * TILE
   const baseY = y + h - 12
-  // Stone base (mono)
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(x + 2, baseY, w - 4, 10)
-  ctx.fillStyle = '#2a2a2a'
-  ctx.fillRect(x + 3, baseY + 1, w - 6, 6)
-  // Outline
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'
-  ctx.fillRect(x + 2, baseY, w - 4, 1)
-  ctx.fillRect(x + 2, baseY + 9, w - 4, 1)
-  ctx.fillRect(x + 2, baseY, 1, 10)
-  ctx.fillRect(x + w - 3, baseY, 1, 10)
 
-  // Glowing gem
+  // Stone base
+  ctx.fillStyle = '#6e6e7a'
+  ctx.fillRect(x + 2, baseY, w - 4, 10)
+  ctx.fillStyle = '#9090a0'
+  ctx.fillRect(x + 3, baseY + 1, w - 6, 6)
+  ctx.fillStyle = '#4a4a55'
+  ctx.fillRect(x + 2, baseY + 9, w - 4, 1)
+  ctx.fillStyle = '#1a1a22'
+  ctx.fillRect(x + 1, baseY, 1, 10)
+  ctx.fillRect(x + w - 2, baseY, 1, 10)
+  ctx.fillRect(x + 2, baseY - 1, w - 4, 1)
+
+  // Glowing gem on top
   const pulse = (Math.sin(t * 3.4 + z.tx) + 1) / 2
   const gemY = y + 3 + (hover ? -1 : 0)
   const gemX = x + w / 2 - 5
-  // Glow halo
-  const glowR = hover ? 14 : 9 + pulse * 3
+  const glowR = hover ? 14 : 10 + pulse * 3
   const grad = ctx.createRadialGradient(gemX + 5, gemY + 5, 1, gemX + 5, gemY + 5, glowR)
-  grad.addColorStop(0, hexA(z.color, 0.6))
+  grad.addColorStop(0, hexA(z.color, 0.55))
   grad.addColorStop(1, hexA(z.color, 0))
   ctx.fillStyle = grad
   ctx.fillRect(gemX - 8, gemY - 8, 26, 26)
-  // Gem body
   ctx.fillStyle = z.color
   ctx.fillRect(gemX + 1, gemY, 8, 9)
   ctx.fillRect(gemX, gemY + 1, 10, 7)
-  // Highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.95)'
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'
   ctx.fillRect(gemX + 2, gemY + 2, 2, 2)
-  // Letter on gem
   ctx.fillStyle = '#000'
   ctx.font = 'bold 6px monospace'
   ctx.textAlign = 'center'
@@ -788,42 +789,56 @@ function drawPedestal(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: 
 }
 
 function drawFoodTile(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: boolean) {
-  // Small table with a plate / bowl on top, mono with a hint of green-yellow
+  // Wooden picnic table with a plate of food on top
   const x = z.tx * TILE
   const y = z.ty * TILE
   const w = z.tw * TILE
   const h = z.th * TILE
   const baseY = y + h - 10
 
-  // Table top
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(x + 3, baseY, w - 6, 4)
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'
-  ctx.fillRect(x + 3, baseY, w - 6, 1)
-  // Table legs
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(x + 4, baseY + 4, 1, 4)
-  ctx.fillRect(x + w - 5, baseY + 4, 1, 4)
+  // Table top (wood)
+  ctx.fillStyle = '#7a4a22'
+  ctx.fillRect(x + 2, baseY, w - 4, 5)
+  ctx.fillStyle = '#9b6a32'
+  ctx.fillRect(x + 2, baseY + 1, w - 4, 2)
+  // Plank lines
+  ctx.fillStyle = '#5a3018'
+  ctx.fillRect(x + 8, baseY, 1, 5)
+  ctx.fillRect(x + 16, baseY, 1, 5)
+  // Legs
+  ctx.fillStyle = '#5a3018'
+  ctx.fillRect(x + 4, baseY + 5, 1, 4)
+  ctx.fillRect(x + w - 5, baseY + 5, 1, 4)
+  // Outline
+  ctx.fillStyle = '#3a1f10'
+  ctx.fillRect(x + 1, baseY, 1, 6)
+  ctx.fillRect(x + w - 2, baseY, 1, 6)
+  ctx.fillRect(x + 2, baseY - 1, w - 4, 1)
 
   // Plate (white circle simulated)
   const plateY = baseY - 3
   const plateX = x + w / 2 - 5
-  ctx.fillStyle = '#e8e8e8'
+  ctx.fillStyle = '#ffffff'
   ctx.fillRect(plateX + 1, plateY, 8, 3)
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(plateX + 2, plateY + 1, 6, 1)
+  ctx.fillStyle = '#d8d8d8'
+  ctx.fillRect(plateX + 2, plateY + 2, 6, 1)
 
-  // Food on plate — animated steam
-  ctx.fillStyle = z.color
+  // Food: rice ball / sushi roll
+  ctx.fillStyle = '#222'
+  ctx.fillRect(plateX + 2, plateY - 1, 2, 1) // nori band
+  ctx.fillStyle = '#f5e8c5'
   ctx.fillRect(plateX + 3, plateY - 1, 4, 1)
-  ctx.fillRect(plateX + 4, plateY - 2, 2, 1)
+  ctx.fillStyle = '#ff8888'
+  ctx.fillRect(plateX + 4, plateY - 2, 2, 1) // salmon top
+  ctx.fillStyle = '#222'
+  ctx.fillRect(plateX + 6, plateY - 1, 2, 1)
+
   // Steam wisps
   const steamY = plateY - 4 - Math.sin(t * 4) * 1
-  ctx.fillStyle = `rgba(255,255,255,${0.3 + 0.2 * Math.sin(t * 3)})`
+  ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.2 * Math.sin(t * 3)})`
   ctx.fillRect(plateX + 3, steamY, 1, 2)
   ctx.fillRect(plateX + 6, steamY - 1, 1, 2)
 
-  // Hover halo
   if (hover) {
     const grad = ctx.createRadialGradient(plateX + 5, plateY, 2, plateX + 5, plateY, 14)
     grad.addColorStop(0, hexA(z.color, 0.4))
@@ -834,43 +849,52 @@ function drawFoodTile(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: 
 }
 
 function drawGymTile(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: boolean) {
-  // A bench with a barbell rack behind it
+  // Wooden bench with a steel barbell on the rack
   const x = z.tx * TILE
   const y = z.ty * TILE
   const w = z.tw * TILE
   const h = z.th * TILE
   const benchY = y + h - 8
 
-  // Rack uprights
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(x + 4, y + 4, 2, 8)
-  ctx.fillRect(x + w - 6, y + 4, 2, 8)
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'
+  // Rack uprights (metal silver)
+  ctx.fillStyle = '#6a6a78'
+  ctx.fillRect(x + 4, y + 4, 2, 9)
+  ctx.fillRect(x + w - 6, y + 4, 2, 9)
+  ctx.fillStyle = '#a8a8b8'
   ctx.fillRect(x + 4, y + 4, 2, 1)
   ctx.fillRect(x + w - 6, y + 4, 2, 1)
+  ctx.fillStyle = '#3a3a45'
+  ctx.fillRect(x + 4, y + 12, 2, 1)
+  ctx.fillRect(x + w - 6, y + 12, 2, 1)
 
-  // Resting barbell on rack (animated when hovered)
+  // Barbell (animated)
   const barY = y + 6 + (hover ? Math.round(Math.sin(t * 4) * 2) : 0)
-  ctx.fillStyle = '#2a2a2a'
+  ctx.fillStyle = '#a8a8b8'
   ctx.fillRect(x + 3, barY, w - 6, 2)
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'
+  ctx.fillStyle = '#dadae6'
   ctx.fillRect(x + 3, barY, w - 6, 1)
-  // Weight plates
-  ctx.fillStyle = '#1a1a1a'
+  // Weight plates (red)
+  ctx.fillStyle = '#aa2a2a'
   ctx.fillRect(x + 2, barY - 1, 2, 4)
   ctx.fillRect(x + w - 4, barY - 1, 2, 4)
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'
+  ctx.fillStyle = '#ff5555'
   ctx.fillRect(x + 2, barY - 1, 2, 1)
   ctx.fillRect(x + w - 4, barY - 1, 2, 1)
+  ctx.fillStyle = '#5a0d0d'
+  ctx.fillRect(x + 2, barY + 2, 2, 1)
+  ctx.fillRect(x + w - 4, barY + 2, 2, 1)
 
-  // Bench
-  ctx.fillStyle = '#1a1a1a'
+  // Bench (wooden)
+  ctx.fillStyle = '#7a4a22'
   ctx.fillRect(x + 3, benchY, w - 6, 3)
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'
+  ctx.fillStyle = '#9b6a32'
   ctx.fillRect(x + 3, benchY, w - 6, 1)
-  ctx.fillStyle = '#0f0f0f'
-  ctx.fillRect(x + 5, benchY + 3, 1, 3)
-  ctx.fillRect(x + w - 6, benchY + 3, 1, 3)
+  ctx.fillStyle = '#3a1f10'
+  ctx.fillRect(x + 3, benchY + 3, w - 6, 1)
+  // Legs
+  ctx.fillStyle = '#3a3a45'
+  ctx.fillRect(x + 5, benchY + 4, 1, 3)
+  ctx.fillRect(x + w - 6, benchY + 4, 1, 3)
 
   if (hover) {
     const grad = ctx.createRadialGradient(x + w / 2, y + h / 2, 2, x + w / 2, y + h / 2, 16)
@@ -888,29 +912,29 @@ function drawPlayer(ctx: CanvasRenderingContext2D, x: number, y: number, dir: Di
   const py = Math.round(y) - bob
 
   // Shadow
-  ctx.fillStyle = 'rgba(255,255,255,0.08)'
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'
   ctx.fillRect(px + 1, py + PLAYER_H - 1, PLAYER_W - 2, 2)
 
   // Head outline
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + 2, py, 6, 1)
   ctx.fillRect(px + 1, py + 1, 8, 1)
   ctx.fillRect(px + 1, py + 2, 1, 3)
   ctx.fillRect(px + 8, py + 2, 1, 3)
   ctx.fillRect(px + 2, py + 5, 6, 1)
-  // Hair (dark)
-  ctx.fillStyle = '#0a0a0a'
+  // Hair
+  ctx.fillStyle = '#3a261a'
   ctx.fillRect(px + 2, py + 1, 6, 2)
-  // Face (light gray)
-  ctx.fillStyle = '#d8d8d8'
+  // Face
+  ctx.fillStyle = '#f4c8a0'
   ctx.fillRect(px + 2, py + 3, 6, 2)
   // Eyes
-  ctx.fillStyle = '#0a0a0a'
+  ctx.fillStyle = '#1a1a22'
   if (dir === 'down') {
     ctx.fillRect(px + 3, py + 3, 1, 1)
     ctx.fillRect(px + 6, py + 3, 1, 1)
   } else if (dir === 'up') {
-    ctx.fillStyle = '#0a0a0a'
+    ctx.fillStyle = '#3a261a'
     ctx.fillRect(px + 2, py + 3, 6, 2)
   } else if (dir === 'left') {
     ctx.fillRect(px + 3, py + 3, 1, 1)
@@ -918,20 +942,19 @@ function drawPlayer(ctx: CanvasRenderingContext2D, x: number, y: number, dir: Di
     ctx.fillRect(px + 6, py + 3, 1, 1)
   }
 
-  // Body — white with purple accent stripe (matches portfolio accent)
-  ctx.fillStyle = '#fff'
+  // Shirt — purple (portfolio accent)
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + 1, py + 6, 8, 1)
   ctx.fillRect(px + 0, py + 7, 1, 3)
   ctx.fillRect(px + 9, py + 7, 1, 3)
   ctx.fillRect(px + 1, py + 10, 8, 1)
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(px + 1, py + 7, 8, 3)
-  // Purple accent
   ctx.fillStyle = '#a06bff'
+  ctx.fillRect(px + 1, py + 7, 8, 3)
+  ctx.fillStyle = '#6c3fcc'
   ctx.fillRect(px + 1, py + 9, 8, 1)
 
   // Legs
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#1a1a22'
   if (frame === 0) {
     ctx.fillRect(px + 2, py + 11, 2, 1)
     ctx.fillRect(px + 6, py + 11, 2, 1)
@@ -942,47 +965,40 @@ function drawPlayer(ctx: CanvasRenderingContext2D, x: number, y: number, dir: Di
 }
 
 function drawPlayerEating(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  // Player sits down, plate of food in front, chewing
   const px = Math.round(x)
   const py = Math.round(y)
-  const chew = Math.floor(t * 3.2) % 2 // 0/1 mouth open/closed
+  const chew = Math.floor(t * 3.2) % 2
 
-  // Sitting body (slightly squashed)
-  ctx.fillStyle = 'rgba(255,255,255,0.08)'
+  ctx.fillStyle = 'rgba(0,0,0,0.2)'
   ctx.fillRect(px - 1, py + PLAYER_H, PLAYER_W + 2, 2)
 
-  // Head (looking down at plate)
-  ctx.fillStyle = '#fff'
+  // Head looking down
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + 2, py + 1, 6, 1)
   ctx.fillRect(px + 1, py + 2, 8, 1)
   ctx.fillRect(px + 1, py + 3, 1, 3)
   ctx.fillRect(px + 8, py + 3, 1, 3)
   ctx.fillRect(px + 2, py + 6, 6, 1)
-  // Hair
-  ctx.fillStyle = '#0a0a0a'
+  ctx.fillStyle = '#3a261a'
   ctx.fillRect(px + 2, py + 2, 6, 2)
-  // Face
-  ctx.fillStyle = '#d8d8d8'
+  ctx.fillStyle = '#f4c8a0'
   ctx.fillRect(px + 2, py + 4, 6, 2)
-  // Closed-eye chewing
-  ctx.fillStyle = '#0a0a0a'
+  // Closed eyes (chewing happy)
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + 3, py + 4, 1, 1)
   ctx.fillRect(px + 6, py + 4, 1, 1)
-  // Mouth (animated)
-  if (chew === 0) {
-    ctx.fillRect(px + 4, py + 5, 2, 1)
-  } else {
-    ctx.fillRect(px + 4, py + 5, 2, 2)
-  }
+  // Mouth
+  if (chew === 0) ctx.fillRect(px + 4, py + 5, 2, 1)
+  else ctx.fillRect(px + 4, py + 5, 2, 2)
 
-  // Body (sitting)
-  ctx.fillStyle = '#1a1a1a'
+  // Sitting body
+  ctx.fillStyle = '#a06bff'
   ctx.fillRect(px + 1, py + 7, 8, 4)
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + 0, py + 7, 1, 4)
   ctx.fillRect(px + 9, py + 7, 1, 4)
   ctx.fillRect(px + 1, py + 11, 8, 1)
-  ctx.fillStyle = '#a06bff'
+  ctx.fillStyle = '#6c3fcc'
   ctx.fillRect(px + 1, py + 10, 8, 1)
 
   // Bowl in front
@@ -991,7 +1007,7 @@ function drawPlayerEating(ctx: CanvasRenderingContext2D, x: number, y: number, t
   ctx.fillStyle = '#fff'
   ctx.fillRect(bowlX, bowlY, 5, 1)
   ctx.fillRect(bowlX - 1, bowlY + 1, 7, 2)
-  ctx.fillStyle = '#c4d65a'
+  ctx.fillStyle = '#ff8888'
   ctx.fillRect(bowlX + 1, bowlY - 1, 3, 1)
 
   // Steam wisps
@@ -1000,84 +1016,86 @@ function drawPlayerEating(ctx: CanvasRenderingContext2D, x: number, y: number, t
   ctx.fillRect(bowlX + 1, sy, 1, 2)
   ctx.fillRect(bowlX + 3, sy - 1, 1, 2)
 
-  // "*munch*" floater text
+  // "*munch*" floater
   if (Math.floor(t * 1.6) % 2 === 0) {
-    ctx.fillStyle = 'rgba(196,214,90,0.85)'
+    ctx.fillStyle = 'rgba(255,230,160,0.95)'
     ctx.font = '5px monospace'
     ctx.fillText('*munch*', px - 6, py - 2)
   }
 }
 
 function drawPlayerBenching(ctx: CanvasRenderingContext2D, x: number, y: number, t: number) {
-  // Player lies on bench, lifts barbell up and down
   const px = Math.round(x)
   const py = Math.round(y)
-  // Lift cycle: 0..1
   const lift = (Math.sin(t * 3) + 1) / 2
-  const barDrop = Math.round(lift * 4) // 0..4
+  const barDrop = Math.round(lift * 4)
 
   // Bench under player
-  ctx.fillStyle = '#1a1a1a'
+  ctx.fillStyle = '#7a4a22'
   ctx.fillRect(px - 2, py + 8, PLAYER_W + 4, 3)
-  ctx.fillStyle = 'rgba(255,255,255,0.5)'
+  ctx.fillStyle = '#9b6a32'
   ctx.fillRect(px - 2, py + 8, PLAYER_W + 4, 1)
+  ctx.fillStyle = '#3a1f10'
+  ctx.fillRect(px - 2, py + 11, PLAYER_W + 4, 1)
 
-  // Player body — horizontal, lying down (head left)
-  // Head (left)
-  ctx.fillStyle = '#fff'
+  // Player lying down (head left)
+  // Head
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px - 4, py + 5, 1, 3)
   ctx.fillRect(px - 3, py + 4, 4, 1)
   ctx.fillRect(px + 1, py + 5, 1, 3)
   ctx.fillRect(px - 3, py + 8, 4, 1)
-  ctx.fillStyle = '#d8d8d8'
+  ctx.fillStyle = '#f4c8a0'
   ctx.fillRect(px - 3, py + 5, 4, 3)
-  ctx.fillStyle = '#0a0a0a'
-  ctx.fillRect(px - 2, py + 5, 1, 1) // hair
-  ctx.fillRect(px - 1, py + 6, 1, 1) // eye
+  ctx.fillStyle = '#3a261a'
+  ctx.fillRect(px - 2, py + 5, 1, 1)
+  ctx.fillStyle = '#1a1a22'
+  ctx.fillRect(px - 1, py + 6, 1, 1)
+
   // Torso
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + 1, py + 4, PLAYER_W - 2, 1)
   ctx.fillRect(px + 1, py + 8, PLAYER_W - 2, 1)
-  ctx.fillRect(px + 1, py + 5, PLAYER_W - 2, 3)
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(px + 2, py + 5, PLAYER_W - 4, 3)
   ctx.fillStyle = '#a06bff'
-  ctx.fillRect(px + 2, py + 6, PLAYER_W - 4, 1)
+  ctx.fillRect(px + 1, py + 5, PLAYER_W - 2, 3)
+  ctx.fillStyle = '#6c3fcc'
+  ctx.fillRect(px + 1, py + 6, PLAYER_W - 2, 1)
+
   // Legs
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#1a1a22'
   ctx.fillRect(px + PLAYER_W - 1, py + 5, 3, 1)
   ctx.fillRect(px + PLAYER_W - 1, py + 7, 3, 1)
-  ctx.fillRect(px + PLAYER_W - 1, py + 5, 1, 3)
-  ctx.fillRect(px + PLAYER_W + 1, py + 5, 1, 3)
+  ctx.fillStyle = '#3a261a'
+  ctx.fillRect(px + PLAYER_W, py + 6, 2, 1)
 
-  // Arms reaching up to barbell
+  // Arms reaching up
   const armY = py + 1 + barDrop
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(px + 1, armY, 1, 4 - barDrop + 4)
-  ctx.fillRect(px + PLAYER_W - 2, armY, 1, 4 - barDrop + 4)
+  ctx.fillStyle = '#f4c8a0'
+  ctx.fillRect(px + 1, armY, 1, 7 - barDrop)
+  ctx.fillRect(px + PLAYER_W - 2, armY, 1, 7 - barDrop)
 
-  // Barbell above player
+  // Barbell
   const barY = py - 2 + barDrop
   const barLeft = px - 4
   const barRight = px + PLAYER_W + 3
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#a8a8b8'
+  ctx.fillRect(barLeft, barY, barRight - barLeft, 2)
+  ctx.fillStyle = '#dadae6'
   ctx.fillRect(barLeft, barY, barRight - barLeft, 1)
-  ctx.fillStyle = '#1a1a1a'
-  ctx.fillRect(barLeft, barY + 1, barRight - barLeft, 1)
   // Plates
-  ctx.fillStyle = '#fff'
+  ctx.fillStyle = '#aa2a2a'
   ctx.fillRect(barLeft - 1, barY - 1, 2, 4)
   ctx.fillRect(barRight - 1, barY - 1, 2, 4)
-  ctx.fillStyle = '#e36b6b'
-  ctx.fillRect(barLeft, barY, 1, 2)
-  ctx.fillRect(barRight, barY, 1, 2)
+  ctx.fillStyle = '#ff5555'
+  ctx.fillRect(barLeft - 1, barY - 1, 2, 1)
+  ctx.fillRect(barRight - 1, barY - 1, 2, 1)
 
-  // Effort sparkles
+  // Effort sparkles + REP! shout
   if (lift > 0.85) {
     ctx.fillStyle = 'rgba(255,255,255,0.7)'
     ctx.fillRect(px + 2 + Math.floor(Math.random() * 6), py - 4, 1, 1)
     ctx.font = '5px monospace'
-    ctx.fillStyle = 'rgba(227,107,107,0.9)'
+    ctx.fillStyle = 'rgba(255,85,85,0.95)'
     ctx.fillText('REP!', px - 1, py - 6)
   }
 }
