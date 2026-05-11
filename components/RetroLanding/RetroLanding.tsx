@@ -137,7 +137,7 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
   const triggerZone = useCallback(
     (z: Zone) => {
       if (z.action === 'link' && z.url) {
-        window.open(z.url, '_blank', 'noopener,noreferrer')
+        openExternal(z.url)
       } else if (z.action === 'game') {
         setShowSnake(true)
       } else if (z.action === 'enter') {
@@ -470,7 +470,8 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
 
           <div style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <button
-              onPointerDown={(e) => {
+              type="button"
+              onClick={(e) => {
                 e.preventDefault()
                 onActionTap()
               }}
@@ -488,8 +489,9 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
                 fontSize: 24,
                 fontFamily: 'monospace',
                 cursor: 'pointer',
-                touchAction: 'none',
+                touchAction: 'manipulation',
                 userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent',
                 boxShadow: 'inset 0 -6px 8px rgba(0,0,0,0.35), 0 6px 14px rgba(0,0,0,0.5)',
                 transition: 'transform 0.1s',
               }}
@@ -1098,6 +1100,20 @@ function drawPlayerBenching(ctx: CanvasRenderingContext2D, x: number, y: number,
     ctx.fillStyle = 'rgba(255,85,85,0.95)'
     ctx.fillText('REP!', px - 1, py - 6)
   }
+}
+
+function openExternal(url: string) {
+  // window.open is unreliable on mobile (esp. iOS Safari). A synthetic anchor
+  // click is the most cross-browser way to open a new tab from a tap.
+  if (typeof document === 'undefined') return
+  const a = document.createElement('a')
+  a.href = url
+  a.target = '_blank'
+  a.rel = 'noopener noreferrer'
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
 }
 
 function hexA(hex: string, a: number) {
