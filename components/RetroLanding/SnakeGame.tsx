@@ -75,39 +75,34 @@ export default function SnakeGame({ onExit }: { onExit: () => void }) {
     const draw = () => {
       const ctx = canvasRef.current?.getContext('2d')
       if (!ctx) return
-      // Background — dark grid
-      ctx.fillStyle = '#0a0d1a'
+      // Background — black with dot grid
+      ctx.fillStyle = '#050505'
       ctx.fillRect(0, 0, W, H)
-      // Grid lines
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)'
-      ctx.lineWidth = 1
-      for (let x = 0; x <= COLS; x++) {
-        ctx.beginPath()
-        ctx.moveTo(x * TILE + 0.5, 0)
-        ctx.lineTo(x * TILE + 0.5, H)
-        ctx.stroke()
-      }
-      for (let y = 0; y <= ROWS; y++) {
-        ctx.beginPath()
-        ctx.moveTo(0, y * TILE + 0.5)
-        ctx.lineTo(W, y * TILE + 0.5)
-        ctx.stroke()
+      // Dot grid (subtle)
+      ctx.fillStyle = 'rgba(255,255,255,0.05)'
+      for (let yy = 4; yy < H; yy += 8) {
+        for (let xx = 4; xx < W; xx += 8) {
+          ctx.fillRect(xx, yy, 1, 1)
+        }
       }
       // Border
       ctx.strokeStyle = 'rgba(255,255,255,0.35)'
       ctx.lineWidth = 2
       ctx.strokeRect(1, 1, W - 2, H - 2)
-      // Food
+      // Food — accent purple gem
       const f = foodRef.current
-      ctx.fillStyle = '#ff3a6a'
-      ctx.fillRect(f.x * TILE + 3, f.y * TILE + 3, TILE - 6, TILE - 6)
-      ctx.fillStyle = 'rgba(255,255,255,0.35)'
-      ctx.fillRect(f.x * TILE + 5, f.y * TILE + 5, 3, 3)
-      // Snake
+      ctx.fillStyle = '#a06bff'
+      ctx.fillRect(f.x * TILE + 4, f.y * TILE + 4, TILE - 8, TILE - 8)
+      ctx.fillStyle = 'rgba(255,255,255,0.9)'
+      ctx.fillRect(f.x * TILE + 6, f.y * TILE + 6, 2, 2)
+      // Snake — white head, dimming tail
       const snake = snakeRef.current
+      const len = snake.length
       snake.forEach((seg, i) => {
         const head = i === 0
-        ctx.fillStyle = head ? '#9bff7a' : '#5fcc55'
+        const fade = 1 - i / Math.max(8, len)
+        const v = Math.max(140, Math.floor(255 * fade))
+        ctx.fillStyle = head ? '#ffffff' : `rgb(${v},${v},${v})`
         ctx.fillRect(seg.x * TILE + 2, seg.y * TILE + 2, TILE - 4, TILE - 4)
         if (head) {
           ctx.fillStyle = '#000'
