@@ -37,7 +37,6 @@ const SOLID = new Set(['T', 'W'])
 type ZoneId =
   | 'linkedin'
   | 'github'
-  | 'instagram'
   | 'snake'
   | 'portfolio'
   | 'food'
@@ -89,21 +88,14 @@ const ZONES: Zone[] = [
   },
   {
     id: 'food',
-    tx: 5, ty: 10, tw: 2, th: 2,
+    tx: 4, ty: 10, tw: 2, th: 2,
     label: 'FOOD', sub: 'Sous chef stop',
     letter: '◐', color: '#ffd158',
     action: 'easter',
   },
   {
-    id: 'instagram',
-    tx: 9, ty: 10, tw: 2, th: 2,
-    label: 'INSTAGRAM', sub: 'Follow',
-    letter: 'IG', color: '#ff4f87',
-    action: 'link', url: LINKS.instagram,
-  },
-  {
     id: 'snake',
-    tx: 13, ty: 10, tw: 2, th: 2,
+    tx: 14, ty: 10, tw: 2, th: 2,
     label: 'ARCADE', sub: 'Play Snake',
     letter: 'AR', color: '#ffd13a',
     action: 'game',
@@ -318,18 +310,57 @@ export default function RetroLanding({ onEnterSite }: { onEnterSite: () => void 
           transition: 'padding-bottom 0.25s ease',
         }}
       >
-        <canvas
-          ref={canvasRef}
-          width={W}
-          height={H}
-          style={{
-            imageRendering: 'pixelated',
-            background: '#5e9a4e',
-            boxShadow:
-              '0 0 0 4px #1a1a1a, 0 0 0 8px #333, 0 30px 80px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.25)',
-            borderRadius: 2,
-          }}
-        />
+        <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0 }}>
+          <canvas
+            ref={canvasRef}
+            width={W}
+            height={H}
+            style={{
+              imageRendering: 'pixelated',
+              background: '#5e9a4e',
+              boxShadow:
+                '0 0 0 4px #1a1a1a, 0 0 0 8px #333, 0 30px 80px rgba(0,0,0,0.6), inset 0 0 40px rgba(0,0,0,0.25)',
+              borderRadius: 2,
+              display: 'block',
+            }}
+          />
+          {/* Crisp HTML labels above each pedestal — scale with the canvas via percentage positioning */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+            }}
+          >
+            {ZONES.map((z) => {
+              const leftPct = ((z.tx + z.tw / 2) * TILE) / W * 100
+              const topPct = (z.ty * TILE) / H * 100
+              const isActive = activeZone?.id === z.id
+              return (
+                <div
+                  key={z.id}
+                  style={{
+                    position: 'absolute',
+                    left: `${leftPct}%`,
+                    top: `${topPct}%`,
+                    transform: 'translate(-50%, -125%)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    color: isActive ? '#fff' : 'rgba(255,255,255,0.92)',
+                    textShadow:
+                      '0 0 4px rgba(0,0,0,0.95), 0 1px 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9), -1px 0 0 rgba(0,0,0,0.9)',
+                    whiteSpace: 'nowrap',
+                    transition: 'color 0.15s, transform 0.15s',
+                  }}
+                >
+                  {z.label}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {!started && (
@@ -625,17 +656,7 @@ function render(
     drawPlayer(ctx, player.x, player.y, dir, walkT)
   }
 
-  // Zone labels
-  ctx.font = 'bold 6px monospace'
-  ctx.textAlign = 'center'
-  for (const z of ZONES) {
-    const cx = z.tx * TILE + (z.tw * TILE) / 2
-    const cy = z.ty * TILE - 2
-    const isActive = active?.id === z.id
-    ctx.fillStyle = isActive ? '#fff' : 'rgba(255,255,255,0.78)'
-    ctx.fillText(z.label, cx, cy)
-  }
-  ctx.textAlign = 'start'
+  // (Zone labels now rendered as crisp HTML above the canvas)
 
   // Vignette
   const grad = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, H * 0.85)
@@ -783,11 +804,9 @@ function drawPedestal(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: 
   ctx.fillRect(gemX, gemY + 1, 10, 7)
   ctx.fillStyle = 'rgba(255,255,255,0.85)'
   ctx.fillRect(gemX + 2, gemY + 2, 2, 2)
-  ctx.fillStyle = '#000'
-  ctx.font = 'bold 6px monospace'
-  ctx.textAlign = 'center'
-  ctx.fillText(z.letter, gemX + 5, gemY + 7)
-  ctx.textAlign = 'start'
+  // Single bright facet pip — replaces the unreadable 6px letter
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'
+  ctx.fillRect(gemX + 5, gemY + 5, 2, 2)
 }
 
 function drawFoodTile(ctx: CanvasRenderingContext2D, z: Zone, t: number, hover: boolean) {
